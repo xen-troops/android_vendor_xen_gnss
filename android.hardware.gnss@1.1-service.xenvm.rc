@@ -1,0 +1,4 @@
+service vendor.gnss_service /vendor/bin/hw/android.hardware.gnss@1.1-service.xenvm
+    class hal
+    user system
+    group system inet
