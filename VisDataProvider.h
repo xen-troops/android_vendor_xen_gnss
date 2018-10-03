@@ -38,8 +38,8 @@ enum ConnState {
 class VisDataProvider {
 
 public:
-	VisDataProvider(const std::string& uri)
-	: mUri(uri), mConnectedState(STATE_DISCONNECTED) { }
+	VisDataProvider()
+	:mConnectedState(STATE_DISCONNECTED) { }
 
 	int init();
 	int pull();

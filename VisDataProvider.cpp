@@ -20,6 +20,7 @@
 //#define LOG_NDEBUG 0
 #define LOG_TAG "gnss.vis-provider.xenvm"
 
+#include <cutils/properties.h>
 #include <log/log.h>
 #include <json/reader.h>
 #include <GnssConstants.h>
@@ -35,6 +36,9 @@ namespace V1_1 {
 namespace xenvm {
 
 int VisDataProvider::init() {
+    char propValue[PROPERTY_VALUE_MAX] = {};
+    property_get("persist.gnss-vis.uri", propValue, "wss://192.168.1.100:8088");
+    mUri = propValue;
     static unsigned int requestid = 0;
     mLocation.gnssLocationFlags = 0xFF;
     mLocation.altitudeMeters = kMockAltitudeMeters;
@@ -163,7 +167,6 @@ int VisDataProvider::pull() {
     if (mConnectedState == STATE_DISCONNECTED) {
         init();
     }
-    ALOGI("Will pull .....");
     mHub.poll();
     return 0;
 }

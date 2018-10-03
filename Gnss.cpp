@@ -39,7 +39,7 @@ using GnssSvFlags = IGnssCallback::GnssSvFlags;
 const uint32_t MIN_INTERVAL_MILLIS = 100;
 sp<::android::hardware::gnss::V1_1::IGnssCallback> Gnss::sGnssCallback = nullptr;
 
-Gnss::Gnss() : mMinIntervalMs(10), mGnssConfiguration{new GnssConfiguration()}, mVis{std::string("wss://192.168.1.100:8088")} {}
+Gnss::Gnss() : mMinIntervalMs(10), mGnssConfiguration{new GnssConfiguration()} {}
 
 Gnss::~Gnss() {
     stop();
