@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2018 EPAM Systems Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +15,8 @@
  * limitations under the License.
  */
 
-#ifndef XENVM_HAL_GNSS_VISDATAPROVIDER_H_
-#define XENVM_HAL_GNSS_VISDATAPROVIDER_H_
+#ifndef VISDATAPROVIDER_H_
+#define VISDATAPROVIDER_H_
 
 #include <android/hardware/gnss/1.0/types.h>
 #include <uWS.h>
@@ -33,36 +34,35 @@ enum ConnState {
     STATE_DISCONNECTED,
     STATE_CONNECTING,
     STATE_CONNECTED
-} ;
+};
 
 class VisDataProvider {
+ public:
+    VisDataProvider()
+    :mConnectedState(STATE_DISCONNECTED) { }
 
-public:
-	VisDataProvider()
-	:mConnectedState(STATE_DISCONNECTED) { }
+    int init();
+    int pull();
+    GnssLocation getLocation() const { return mLocation; }
 
-	int init();
-	int pull();
-	GnssLocation getLocation() const { return mLocation; }
+ private:
+    std::string mUri;
+    uWS::Hub mHub;
+    ConnState mConnectedState;
+    GnssLocation mLocation;
 
-private:
-	std::string mUri;
-	uWS::Hub mHub;
-	ConnState mConnectedState;
-	GnssLocation mLocation;
-
-	static constexpr const char* paramValueName = "value";
-	static constexpr const char* paramLonName = "Signal.Emulator.telemetry.lon";
-	static constexpr const char* paramLatName = "Signal.Emulator.telemetry.lat";
-	static constexpr const char* paramTimestampName = "timestamp";
-	static constexpr const char* paramVehSpeedName = "Signal.Emulator.telemetry.veh_speed";
-	static constexpr const char* paramTelemtryAll = "Signal.Emulator.telemetry.*";
-	static constexpr const char* requestTemplateGet = "{\
-			\"action\": \"get\",\
-			\"path\": \"%s\",\
-			\"requestId\": \"%d\"\
-	}";
-	static const int maxBufferLength = 1024;
+    static constexpr const char* paramValueName = "value";
+    static constexpr const char* paramLonName = "Signal.Emulator.telemetry.lon";
+    static constexpr const char* paramLatName = "Signal.Emulator.telemetry.lat";
+    static constexpr const char* paramTimestampName = "timestamp";
+    static constexpr const char* paramVehSpeedName = "Signal.Emulator.telemetry.veh_speed";
+    static constexpr const char* paramTelemtryAll = "Signal.Emulator.telemetry.*";
+    static constexpr const char* requestTemplateGet = "{\
+            \"action\": \"get\",\
+            \"path\": \"%s\",\
+            \"requestId\": \"%d\"\
+    }";
+    static const int kMaxBufferLength = 1024;
 };
 
 
@@ -72,4 +72,4 @@ private:
 }  // namespace hardware
 }  // namespace android
 
-#endif /* XENVM_HAL_GNSS_VISDATAPROVIDER_H_ */
+#endif  // VISDATAPROVIDER_H_

@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2018 EPAM Systems Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +15,17 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_GNSS_V1_1_GNSS_H
-#define ANDROID_HARDWARE_GNSS_V1_1_GNSS_H
+#ifndef GNSS_H_
+#define GNSS_H_
 
 #include <android/hardware/gnss/1.1/IGnss.h>
 #include <hidl/MQDescriptor.h>
 #include <hidl/Status.h>
+
 #include <atomic>
 #include <mutex>
 #include <thread>
+
 #include "GnssConfiguration.h"
 #include "VisDataProvider.h"
 
@@ -100,7 +103,7 @@ struct Gnss : public IGnss {
         const ::android::hardware::gnss::V1_0::GnssLocation& location) override;
 
     // Methods from ::android::hidl::base::V1_0::IBase follow.
-   private:
+ private:
     Return<GnssLocation> getMockLocation() const;
     Return<GnssSvStatus> getMockSvStatus() const;
     Return<GnssSvInfo> getSvInfo(int16_t svid, GnssConstellationType type, float cN0DbHz,
@@ -109,7 +112,7 @@ struct Gnss : public IGnss {
     Return<void> reportSvStatus(const GnssSvStatus&) const;
 
     static sp<IGnssCallback> sGnssCallback;
-    std::atomic<long> mMinIntervalMs;
+    std::atomic<int64_t> mMinIntervalMs;
     sp<GnssConfiguration> mGnssConfiguration;
     std::atomic<bool> mIsActive;
     std::thread mThread;
@@ -117,10 +120,10 @@ struct Gnss : public IGnss {
     VisDataProvider mVis;
 };
 
-}  // namespace implementation
+}  // namespace xenvm
 }  // namespace V1_1
 }  // namespace gnss
 }  // namespace hardware
 }  // namespace android
 
-#endif  // ANDROID_HARDWARE_GNSS_V1_1_GNSS_H
+#endif  // GNSS_H_

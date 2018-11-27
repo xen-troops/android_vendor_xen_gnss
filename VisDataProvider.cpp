@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2018 EPAM Systems Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +15,21 @@
  * limitations under the License.
  */
 
-#ifndef XENVM_HAL_GNSS_VISDATAPROVIDER_CPP_
-#define XENVM_HAL_GNSS_VISDATAPROVIDER_CPP_
-
-//#define LOG_NDEBUG 0
+// #define LOG_NDEBUG 0
 #define LOG_TAG "gnss.vis-provider.xenvm"
 
 #include <cutils/properties.h>
 #include <log/log.h>
 #include <json/reader.h>
+
+#include <string>
+
 #include <GnssConstants.h>
 
 #include "VisDataProvider.h"
 
-using namespace Json;
+using Json::Reader;
+using Json::Value;
 
 namespace android {
 namespace hardware {
@@ -50,7 +52,7 @@ int VisDataProvider::init() {
     mLocation.bearingAccuracyDegrees = kMockBearingAccuracyDegrees;
 
     mHub.onError([this](void *user) {
-        switch ((long) user) {
+        switch (reinterpret_cast<int64_t>(user)) {
             case 1:
                 ALOGE("Client emitted error on invalid URI");
                 break;
@@ -77,7 +79,7 @@ int VisDataProvider::init() {
                 protocolErrorCount++;
                 ALOGE("Client emitted error on invalid protocol");
                 if (protocolErrorCount > 1) {
-                    ALOGE( "FAILURE: %d errors emitted for one connection!", protocolErrorCount);
+                    ALOGE("FAILURE: %d errors emitted for one connection!", protocolErrorCount);
                 }
                 break;
             default:
@@ -103,17 +105,20 @@ int VisDataProvider::init() {
                 Json::Value value = rootVal[paramValueName];
                 if (!value.isNull()) {
                     if (!value[paramLonName].isNull()) {
-                        mLocation.longitudeDegrees = std::stof(value[paramLonName].asString().c_str());
+                        mLocation.longitudeDegrees =
+                                std::stof(value[paramLonName].asString().c_str());
                     } else {
                         ALOGE("Parameter %s not found", paramLonName);
                     }
                     if (!value[paramLatName].isNull()) {
-                        mLocation.latitudeDegrees = std::stof(value[paramLatName].asString().c_str());
+                        mLocation.latitudeDegrees =
+                                std::stof(value[paramLatName].asString().c_str());
                     } else {
                         ALOGE("Parameter %s not found", paramLatName);
                     }
                     if (!value[paramVehSpeedName].isNull()) {
-                        mLocation.speedMetersPerSec = ((value[paramVehSpeedName].asUInt() * 1000) / (60*60));
+                        mLocation.speedMetersPerSec =
+                                ((value[paramVehSpeedName].asUInt() * 1000) / (60*60));
                     } else {
                         ALOGE("Parameter %s not found", paramVehSpeedName);
                     }
@@ -125,8 +130,8 @@ int VisDataProvider::init() {
                 }
             }
 
-            char buffer [maxBufferLength];
-            sprintf(buffer, requestTemplateGet, paramTelemtryAll, requestid++);
+            char buffer[kMaxBufferLength];
+            snprintf(buffer, kMaxBufferLength, requestTemplateGet, paramTelemtryAll, requestid++);
             ws->send(buffer);
             return;
         }
@@ -134,7 +139,7 @@ int VisDataProvider::init() {
     });
 
     mHub.onConnection([this](uWS::WebSocket<uWS::CLIENT> *ws, uWS::HttpRequest /*req*/) {
-        switch ((long) ws->getUserData()) {
+        switch (reinterpret_cast<int64_t>(ws->getUserData())) {
         case 8:
             ALOGE("Client established a remote connection over non-SSL");
             ws->close();
@@ -142,18 +147,21 @@ int VisDataProvider::init() {
         case 9:
             ALOGI("Client established a remote connection over SSL");
             mConnectedState = STATE_CONNECTED;
-            char buffer [maxBufferLength];
-            sprintf(buffer, requestTemplateGet, paramTelemtryAll, requestid++);
+            char buffer[kMaxBufferLength];
+            snprintf(buffer, kMaxBufferLength, requestTemplateGet, paramTelemtryAll, requestid++);
             ws->send(buffer);
             break;
         default:
-            ALOGE("FAILURE: %ld should not connect!", reinterpret_cast<long>(ws->getUserData()));
+            ALOGE("FAILURE: %ld should not connect!", reinterpret_cast<int64_t>(ws->getUserData()));
             ws->close();
         }
     });
 
-    mHub.onDisconnection([this](uWS::WebSocket<uWS::CLIENT> *ws, int code, char *message, size_t length) {
-        ALOGI("Client got disconnected with data: %ld code %d message:%s", (long)ws->getUserData() , code, std::string(message, length).c_str());
+    mHub.onDisconnection([this](uWS::WebSocket<uWS::CLIENT> *ws, int code,
+            char *message, size_t length) {
+        ALOGI("Client got disconnected with data: %ld code %d message:%s",
+                reinterpret_cast<int64_t>(ws->getUserData()), code,
+                std::string(message, length).c_str());
         mConnectedState = STATE_DISCONNECTED;
     });
 
@@ -178,4 +186,3 @@ int VisDataProvider::pull() {
 }  // namespace hardware
 }  // namespace android
 
-#endif /* XENVM_HAL_GNSS_VISDATAPROVIDER_CPP_ */

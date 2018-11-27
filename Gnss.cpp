@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2018 EPAM Systems Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +15,7 @@
  * limitations under the License.
  */
 
-//#define LOG_NDEBUG 0
+// #define LOG_NDEBUG 0
 #define LOG_TAG "gnss.xenvm"
 
 #include <android/hardware/gnss/1.0/types.h>
@@ -59,9 +60,9 @@ Return<bool> Gnss::start() {
 
     mIsActive = true;
     mThread = std::thread([this]() {
-    	mVis.init();
+        mVis.init();
         while (mIsActive == true) {
-        	mVis.pull();
+            mVis.pull();
             auto svStatus = this->getMockSvStatus();
             this->reportSvStatus(svStatus);
 
@@ -280,7 +281,7 @@ Return<void> Gnss::reportSvStatus(const GnssSvStatus& svStatus) const {
     return Void();
 }
 
-}  // namespace implementation
+}  // namespace xenvm
 }  // namespace V1_1
 }  // namespace gnss
 }  // namespace hardware
