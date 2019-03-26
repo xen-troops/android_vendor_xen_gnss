@@ -27,11 +27,6 @@ cc_binary {
     static_libs: [
     	"libjsoncpp",
     ],
-    include_dirs: [
-    	"vendor/unetworking/uwebsockets/src",
-    	"external/boringssl/include",
-    	"external/zlib",
-    ],    
 	cflags: [
 		"-std=c++11",
 		"-DLOG_NDEBUG",
