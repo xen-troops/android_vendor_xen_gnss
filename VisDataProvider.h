@@ -52,11 +52,11 @@ class VisDataProvider {
     GnssLocation mLocation;
 
     static constexpr const char* paramValueName = "value";
-    static constexpr const char* paramLonName = "Signal.Emulator.telemetry.lon";
-    static constexpr const char* paramLatName = "Signal.Emulator.telemetry.lat";
     static constexpr const char* paramTimestampName = "timestamp";
-    static constexpr const char* paramVehSpeedName = "Signal.Emulator.telemetry.veh_speed";
-    static constexpr const char* paramTelemtryAll = "Signal.Emulator.telemetry.*";
+    static constexpr const char* paramLonName = "Signal.Cabin.Infotainment.Navigation.CurrentLocation.Longitude";
+    static constexpr const char* paramLatName = "Signal.Cabin.Infotainment.Navigation.CurrentLocation.Latitude";
+    static constexpr const char* paramVehSpeedName = "Signal.Cabin.Infotainment.Navigation.CurrentLocation.Speed";
+    static constexpr const char* paramTelemtryAll = "Signal.Cabin.Infotainment.Navigation.CurrentLocation.*";
     static constexpr const char* requestTemplateGet = "{\
             \"action\": \"get\",\
             \"path\": \"%s\",\
