@@ -54,13 +54,13 @@ Return<bool> Gnss::setCallback(const sp<::android::hardware::gnss::V1_0::IGnssCa
 
 Return<bool> Gnss::start() {
     if (mIsActive) {
-        ALOGW("Gnss has started. Restarting...");
-        stop();
+        return true;
     }
 
     mIsActive = true;
+    mVis.init();
+    mVis.waitConnection(5);
     mThread = std::thread([this]() {
-        mVis.init();
         while (mIsActive == true) {
             mVis.pull();
             auto svStatus = this->getMockSvStatus();
