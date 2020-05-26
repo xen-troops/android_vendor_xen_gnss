@@ -44,6 +44,7 @@ class VisDataProvider {
     int init();
     int pull();
     GnssLocation getLocation() const { return mLocation; }
+    bool waitConnection(int s) const;
 
  private:
     std::string mUri;
