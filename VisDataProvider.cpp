@@ -179,6 +179,17 @@ int VisDataProvider::pull() {
     return 0;
 }
 
+bool VisDataProvider::waitConnection(int s) const {
+    ALOGV("waitConnectionMs");
+    int minSleepTime = std::min(s, 1);
+    int timeSleeped = 0;
+    while (mConnectedState != STATE_CONNECTED) {
+        sleep(minSleepTime);
+        timeSleeped += minSleepTime;
+        if (timeSleeped >= s) break;
+    }
+    return mConnectedState == STATE_CONNECTED;
+}
 
 }  // namespace xenvm
 }  // namespace V1_1
