@@ -84,7 +84,8 @@ Return<bool> Gnss::stop() {
 }
 
 Return<void> Gnss::cleanup() {
-    // TODO implement
+    std::unique_lock<std::mutex> lock(mMutex);
+    sGnssCallback = nullptr;
     return Void();
 }
 
@@ -163,6 +164,7 @@ Return<sp<::android::hardware::gnss::V1_0::IGnssBatching>> Gnss::getExtensionGns
 // Methods from ::android::hardware::gnss::V1_1::IGnss follow.
 Return<bool> Gnss::setCallback_1_1(
     const sp<::android::hardware::gnss::V1_1::IGnssCallback>& callback) {
+    std::unique_lock<std::mutex> lock(mMutex);
     if (callback == nullptr) {
         ALOGE("%s: Null callback ignored", __func__);
         return false;
