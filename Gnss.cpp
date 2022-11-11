@@ -59,7 +59,6 @@ Return<bool> Gnss::start() {
 
     mIsActive = true;
     mVis.init();
-    mVis.waitConnection(5);
     mThread = std::thread([this]() {
         while (mIsActive == true) {
             mVis.pull();
