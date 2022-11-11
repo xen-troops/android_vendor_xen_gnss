@@ -39,7 +39,7 @@ namespace xenvm {
 
 int VisDataProvider::init() {
     char propValue[PROPERTY_VALUE_MAX] = {};
-    property_get("persist.vis.uri", propValue, "wss://wwwivi:8088");
+    property_get("persist.vendor.vis.uri", propValue, "wss://wwwivi:8088");
     mUri = propValue;
     static unsigned int requestid = 0;
     mLocation.gnssLocationFlags = 0xFF;
