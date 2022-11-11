@@ -269,6 +269,10 @@ Return<void> Gnss::reportLocation(const GnssLocation& location) const {
         ALOGE("%s: sGnssCallback is null.", __func__);
         return Void();
     }
+
+    if(location.timestamp != 0)
+        sGnssCallback->gnssLocationCb(location);
+
     sGnssCallback->gnssLocationCb(location);
     return Void();
 }
