@@ -21,6 +21,8 @@
 #include <android/hardware/gnss/1.0/types.h>
 #include <uWS.h>
 #include <string>
+#include "mutex"
+#include "atomic"
 
 using android::hardware::gnss::V1_0::GnssLocation;
 
@@ -43,14 +45,15 @@ class VisDataProvider {
 
     int init();
     int pull();
-    GnssLocation getLocation() const { return mLocation; }
+    GnssLocation getLocation() const;
     bool waitConnection(int s) const;
 
  private:
     std::string mUri;
     uWS::Hub mHub;
-    ConnState mConnectedState;
+    std::atomic<ConnState> mConnectedState;
     GnssLocation mLocation;
+    mutable std::recursive_mutex mProtector;
 
     static constexpr const char* paramValueName = "value";
     static constexpr const char* paramTimestampName = "timestamp";

@@ -37,7 +37,16 @@ namespace gnss {
 namespace V1_1 {
 namespace xenvm {
 
+const int32_t cookie = 0xdeadbeef;
+
+GnssLocation VisDataProvider::getLocation() const{
+    const std::lock_guard<std::recursive_mutex> lock(mProtector);
+    return mLocation;
+}
+
 int VisDataProvider::init() {
+    const std::lock_guard<std::recursive_mutex> lock(mProtector);
+
     char propValue[PROPERTY_VALUE_MAX] = {};
     property_get("persist.vendor.vis.uri", propValue, "wss://wwwivi:8088");
     mUri = propValue;
@@ -51,51 +60,25 @@ int VisDataProvider::init() {
     mLocation.speedAccuracyMetersPerSecond = kMockSpeedAccuracyMetersPerSecond;
     mLocation.bearingAccuracyDegrees = kMockBearingAccuracyDegrees;
 
-    mHub.onError([this](void *user) {
-        switch (reinterpret_cast<int64_t>(user)) {
-            case 1:
-                ALOGE("Client emitted error on invalid URI");
-                break;
-            case 2:
-                ALOGE("Client emitted error on resolve failure");
-                break;
-            case 3:
-                ALOGE("Client emitted error on connection timeout (non-SSL)");
-                break;
-            case 5:
-                ALOGE("Client emitted error on connection timeout (SSL)");
-                break;
-            case 6:
-                ALOGE("Client emitted error on HTTP response without upgrade (non-SSL)");
-                break;
-            case 7:
-                ALOGE("Client emitted error on HTTP response without upgrade (SSL)");
-                break;
-            case 10:
-                ALOGE("Client emitted error on poll error");
-                break;
-            case 11:
-                static int protocolErrorCount = 0;
-                protocolErrorCount++;
-                ALOGE("Client emitted error on invalid protocol");
-                if (protocolErrorCount > 1) {
-                    ALOGE("FAILURE: %d errors emitted for one connection!", protocolErrorCount);
-                }
-                break;
-            default:
-                ALOGE("FAILURE: %p should not emit error!", user);
-        }
+    mHub.onError([this](void *code) {
+        const std::lock_guard<std::recursive_mutex> lock(mProtector);
+
+        ALOGE("Websocket FAILURE: %p", code);
         if (mConnectedState == STATE_CONNECTING) {
             mConnectedState = STATE_DISCONNECTED;
         }
     });
 
-    mHub.onTransfer([](uWS::WebSocket<uWS::CLIENT> *ws) {
+    mHub.onTransfer([this](uWS::WebSocket<uWS::CLIENT> *ws) {
+        const std::lock_guard<std::recursive_mutex> lock(mProtector);
+
         ALOGV("onTransfer");
         ws->close();
     });
 
     mHub.onMessage([this](uWS::WebSocket<uWS::CLIENT> *ws, char * c, size_t t, uWS::OpCode op) {
+        const std::lock_guard<std::recursive_mutex> lock(mProtector);
+
         ALOGV("onMessage");
         if (op == uWS::OpCode::TEXT) {
             std::string str(c, t);
@@ -139,12 +122,10 @@ int VisDataProvider::init() {
     });
 
     mHub.onConnection([this](uWS::WebSocket<uWS::CLIENT> *ws, uWS::HttpRequest /*req*/) {
+        const std::lock_guard<std::recursive_mutex> lock(mProtector);
+
         switch (reinterpret_cast<int64_t>(ws->getUserData())) {
-        case 8:
-            ALOGE("Client established a remote connection over non-SSL");
-            ws->close();
-            break;
-        case 9:
+        case cookie:
             ALOGI("Client established a remote connection over SSL");
             mConnectedState = STATE_CONNECTED;
             char buffer[kMaxBufferLength];
@@ -152,13 +133,15 @@ int VisDataProvider::init() {
             ws->send(buffer);
             break;
         default:
-            ALOGE("FAILURE: %ld should not connect!", reinterpret_cast<int64_t>(ws->getUserData()));
+            ALOGE("Unexpected user data: %ld!", reinterpret_cast<int64_t>(ws->getUserData()));
             ws->close();
         }
     });
 
     mHub.onDisconnection([this](uWS::WebSocket<uWS::CLIENT> *ws, int code,
             char *message, size_t length) {
+        const std::lock_guard<std::recursive_mutex> lock(mProtector);
+
         ALOGI("Client got disconnected with data: %ld code %d message:%s",
                 reinterpret_cast<int64_t>(ws->getUserData()), code,
                 std::string(message, length).c_str());
@@ -166,7 +149,7 @@ int VisDataProvider::init() {
     });
 
     ALOGI("Will try uri[%s]", mUri.c_str());
-    mHub.connect(mUri.c_str(), (void *) 9);
+    mHub.connect(mUri.c_str(), (void *) cookie);
     mConnectedState = STATE_CONNECTING;
     return 0;
 }
@@ -183,12 +166,17 @@ bool VisDataProvider::waitConnection(int s) const {
     ALOGV("waitConnectionMs");
     int minSleepTime = std::min(s, 1);
     int timeSleeped = 0;
-    while (mConnectedState != STATE_CONNECTED) {
+    while (true) {
         sleep(minSleepTime);
         timeSleeped += minSleepTime;
-        if (timeSleeped >= s) break;
+        if (timeSleeped >= s) {
+            return mConnectedState == STATE_CONNECTED;
+        } else if (mConnectedState == STATE_CONNECTED) {
+            return true;
+        }
     }
-    return mConnectedState == STATE_CONNECTED;
+
+    return true;
 }
 
 }  // namespace xenvm

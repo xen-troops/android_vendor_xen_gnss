@@ -272,7 +272,6 @@ Return<void> Gnss::reportLocation(const GnssLocation& location) const {
     if(location.timestamp != 0)
         sGnssCallback->gnssLocationCb(location);
 
-    sGnssCallback->gnssLocationCb(location);
     return Void();
 }
 
